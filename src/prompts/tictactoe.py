@@ -1,4 +1,4 @@
-from src.prompts.prompt_utils import get_answer_format, extract_final_answer
+from prompts.prompt_utils import get_answer_format, extract_final_answer
 
 def create_prompt(game_state):
     player_symbol_dict = {-1: "X", 0: "-", 1: 'O'}
