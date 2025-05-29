@@ -144,6 +144,8 @@ def get_game_states_for_prompts(game_type, outdir=None):
             ],
             "win_critical": tree.win_critical,
             "lose_critical": tree.lose_critical,
+            "win_difficulty": tree.win_difficulty,
+            "lose_difficulty": tree.lose_difficulty,
             "tree_size": tree.size
         }
     states = tree.mapfilter_traverse(filter_fxn=lambda x: x.win_critical != x.lose_critical, map_fxn=tree_to_prompt_state)
