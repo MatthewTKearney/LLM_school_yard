@@ -3,11 +3,12 @@ def get_answer_format(answer_text):
 
 def extract_final_answer(response):
     start_tag = "<final_answer>"
-    end_tag
+    end_tag = "</final_answer>"
     try:
         start_tag_idx = response.index(start_tag)
         end_tag_idx = response.index(end_tag)
         answer = response[start_tag_idx + len(start_tag):end_tag_idx]
+        return answer
     except:
         return None
 
