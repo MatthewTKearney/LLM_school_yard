@@ -1,22 +1,19 @@
-from src.prompts.prompt_utils import get_answer_format, extract_final_answer
+from prompts.prompt_utils import get_answer_format, extract_final_answer
 
 def create_prompt(game_state):
     player_symbol_dict = {1: "X", 0: "-", 1: '0'}
     board = board_to_str(game_state["board"])
     player_symbol = player_symbol_dict[game_state["next_player"]]
-    n_dim = len(game_state["board"])
-    dim_num_strs = ", ".join([x for x in range(1, n_dim)]) + f", and {n_dim}" 
-    
-    prompt =
-    f"""
-    We are playing tic-tac-toe. You are {player_symbol}. It is your move. The current board is:
+    n_dim = len(board)
+    dim_num_strs = ", ".join([str(x) for x in range(1, n_dim)]) + f", and {n_dim}" 
 
-    ```
-    {board}
-    ```
+    prompt = f"""
+We are playing tic-tac-toe. You are {player_symbol}. It is your move. The current board is:
 
-    Think carefully about the optimal move and then choose the space to move in. Your final answer should be of the format "{get_answer_format("row, col")}" where row is the row number, which are numbered from top to bottom {dim_num_strs}, and col is the column number, which are numbered from left to right.{dim_num_strs}.
-    """
+{board}
+
+Think carefully about the optimal move and then choose the space to move in. Your final answer should be of the format "{get_answer_format("row, col")}" where row is the row number, which are numbered from top to bottom {dim_num_strs}, and col is the column number, which are numbered from left to right.{dim_num_strs}.
+""".strip()
 
     return prompt
     
