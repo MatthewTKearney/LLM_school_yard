@@ -1,7 +1,10 @@
 import numpy as np
 import os
 import argparse
+from copy import deepcopy
+
 from src.games import game_classes
+from src.utils import json_save
     
 
 class GameStateTree():
@@ -130,6 +133,8 @@ def get_game_states_for_prompts(game_type, outdir=None):
     outpath = os.path.join(outdir, f"{game_type}.json")
     
     def tree_to_prompt_state(tree):
+        move_outcomes = np.array(list(tree.move_to_outcome.values()))
+        optimal_outcome = np.max(move_outcomes)
         return {
             "board": tree.board.tolist(),
             "next_player": tree.next_player,
@@ -142,10 +147,13 @@ def get_game_states_for_prompts(game_type, outdir=None):
                 }
                 for move, child in zip(tree.legal_moves, tree.children)
             ],
+            "optimal_outcome": optimal_outcome,
             "win_critical": tree.win_critical,
             "lose_critical": tree.lose_critical,
             "win_difficulty": tree.win_difficulty,
             "lose_difficulty": tree.lose_difficulty,
+            "num_optimal_moves": np.sum(move_outcomes == optimal_outcome),
+            "optimal_move_percent": np.mean(move_outcomes == optimal_outcome),
             "tree_size": tree.size
         }
     states = tree.mapfilter_traverse(filter_fxn=lambda x: x.win_critical != x.lose_critical, map_fxn=tree_to_prompt_state)
@@ -155,7 +163,7 @@ def get_game_states_for_prompts(game_type, outdir=None):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--game", help="Game to generate tree from", required=True, type=str)
-    parser.add_argument("--outdir", help="Directory to save critical points in", default="../data/critical_points", type=str)
+    parser.add_argument("--outdir", help="Directory to save critical points in", default="./data/critical_points", type=str)
     args = parser.parse_args()
 
     get_game_states_for_prompts(args.game, args.outdir)
