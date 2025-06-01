@@ -3,10 +3,9 @@ import os
 import argparse
 from copy import deepcopy
 
-from src.games import game_classes
-from src.utils import json_save
+from src.games import GAME_PACKAGES
+from src.utils import json_save, json_dumps
     
-
 class GameStateTree():
     def __init__(self, game, node_lookup=None, root=False):
         self._game_state = game.get_state()
@@ -81,7 +80,7 @@ class GameStateTree():
 
     def calc_num_moves_to_outcomes(self):
         """
-        r\Returns a dictionary that maps each possible outcome (1 - win, 0 - draw, -1 - loss) 
+        Returns a dictionary that maps each possible outcome (1 - win, 0 - draw, -1 - loss) 
         to a list of the number of moves in each possible path to achieve that outcome
         """
         if len(self.children) == 0:
@@ -126,8 +125,11 @@ class GameStateTree():
             print()
 
 
-def get_game_states_for_prompts(game_type, outdir=None):
-    game = game_classes[game_type]()
+def export_game_states(game_type, outdir=None, include_all_states=False):
+    filter_fxn=lambda x: x.win_critical != x.lose_critical
+    if include_all_states:
+        filter_fxn=lambda x: True
+    game = GAME_PACKAGES[game_type].GameClass()
     tree = GameStateTree(game)
     os.makedirs(outdir, exist_ok=True)
     outpath = os.path.join(outdir, f"{game_type}.json")
@@ -147,6 +149,7 @@ def get_game_states_for_prompts(game_type, outdir=None):
                 }
                 for move, child in zip(tree.legal_moves, tree.children)
             ],
+            "optimal_moves": [move for move in tree.legal_moves if tree.move_to_outcome[move] == optimal_outcome],
             "optimal_outcome": optimal_outcome,
             "win_critical": tree.win_critical,
             "lose_critical": tree.lose_critical,
@@ -156,17 +159,18 @@ def get_game_states_for_prompts(game_type, outdir=None):
             "optimal_move_percent": np.mean(move_outcomes == optimal_outcome),
             "tree_size": tree.size
         }
-    states = tree.mapfilter_traverse(filter_fxn=lambda x: x.win_critical != x.lose_critical, map_fxn=tree_to_prompt_state)
+    states = tree.mapfilter_traverse(filter_fxn=filter_fxn, map_fxn=tree_to_prompt_state)
     json_save(outpath, states)
     return states
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--game", help="Game to generate tree from", required=True, type=str)
-    parser.add_argument("--outdir", help="Directory to save critical points in", default="./data/critical_points", type=str)
+    parser.add_argument("--data_root", help="Directory to save critical points in", default="./data/critical_points", type=str)
+    parser.add_argument("--include_all_states", help="Whether to export only the critical points in the game tree or all states", action='store_true')
     args = parser.parse_args()
 
-    get_game_states_for_prompts(args.game, args.outdir)
+    export_game_states(args.game, args.data_root, args.include_all_states)
 
 if __name__ == "__main__":
     main()

@@ -1,56 +1,35 @@
-from inspect_ai import Task, task
-from inspect_ai.scorer import Score, accuracy, scorer, stderr
-from inspect_ai.solver import TaskState, generate
-from inspect_ai.dataset import json_dataset, Sample
-from prompts.tictactoe import create_prompt, evaluate_response
-import random 
+import argparse 
 
-random.seed(0)
+from src.game_tree import export_game_states
+from src.eval_task import run_task
+from src.process_results import process_results
 
-def record_to_sample(record):
-    return Sample(
-        input=create_prompt(record),
-        metadata=record
-    )
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--game", help="Game to generate tree from", required=True, type=str)
+    parser.add_argument("--data_dir", help="Directory to where critical points are saved", default="./data", type=str)
+    
+    # args for exporting game states
+    parser.add_argument("--include_all_states", help="Whether to export only the critical points in the game tree or all states", action='store_true')
+    
+    # args for running task
+    parser.add_argument("--sample_filter", help="Name of the game specific function to use to filter samples before getting model responses", default=None, type=str)
+    parser.add_argument("--models", help="Models to evaluate", required=True, nargs='+')
+    parser.add_argument("--max_num_samples", help="Maximum number of game states to evaluate model on", default=None, type=int)
+    parser.add_argument("--token_limit", help="Model generation token limit", default=None, type=int)
+    
+    # args for processing results
+    parser.add_argument("--baselines", help="Baseline strategies to plot evaluation results for", required=False, default="all", nargs='+')
+    parser.add_argument("--group_keys", help="Properties of samples for grouping scores into subplots", default=None, nargs='+')
 
-tictactoe = json_dataset(
-    "/home/ubuntu/LLM_school_yard/data/critical_points/tictactoe.json", 
-    record_to_sample,
-    shuffle=True,
-)
+    args = parser.parse_args()
 
-def non_trivial(sample) -> bool:
-    cond_1 = sample.metadata["win_difficulty"] != 1 and sample.metadata["lose_difficulty"] != 2
-    # move_to_outcome = {tuple(m["move"]): m["outcome"] for m in sample.metadata["moves"]}
-    # cond_2 = (1,1) in move_to_outcome and move_to_outcome[(1, 1)] == max(move_to_outcome.values())
-    return cond_1 # and not cond_2
+    export_game_states(args.game, outdir=args.data_dir, include_all_states=False)
 
-# def win_diff_1(sample) -> bool:
-#     return sample.metadata["win_difficulty"] == 1
+    print(args.token_limit)
+    run_task(args.game, args.models, data_dir=args.data_dir, sample_filter=args.sample_filter, max_num_samples=args.max_num_samples, token_limit=args.token_limit)
 
-# def lose_diff_2(sample) -> bool:
-#     return sample.metadata["lose_difficulty"] == 2
+    process_results(args.game, args.models, args.baselines, args.group_keys, args.data_dir)
 
-tictactoe = tictactoe.filter(non_trivial)
-print(len(tictactoe))
-
-@scorer(metrics=[accuracy(), stderr()])
-def tictactoe_scorer():
-    async def score(state: TaskState, target):
-        score = evaluate_response(state.metadata, state.output.completion)
-        if score is None:
-            return Score(value="N") # No answer
-        elif score == 1:
-            return Score(value="C")
-        else:
-            return Score(value="I")
-    return score
-
-@task
-def tictactoe_task():
-    return Task(
-        dataset=tictactoe,
-        solver=[generate()],
-        scorer=tictactoe_scorer()
-    )
-
+if __name__ == "__main__":
+    main()
