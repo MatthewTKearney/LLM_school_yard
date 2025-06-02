@@ -37,7 +37,7 @@ def get_dataset(game, data_dir="./data", sample_filter=None, max_num_samples=Non
 
     # always filter for points that are either win_critical or lose_critical but not both
     dataset = dataset.filter(lambda sample: sample.metadata["win_critical"] != sample.metadata["lose_critical"])
-    if not sample_filter is None:
+    if sample_filter is not None:
         dataset = dataset.filter(game_package.critical_points.filters[sample_filter])
     if max_num_samples:
         dataset = dataset[:max_num_samples]
@@ -49,7 +49,7 @@ def get_scorer(game):
         async def score(state: TaskState, target):
             score = score_response(
                 state.output.completion,
-                {move["move"] for move in state.metadata["moves"]}, 
+                {tuple(move["move"]) for move in state.metadata["moves"]}, 
                 state.metadata["optimal_moves"], 
                 response_to_move=GAME_PACKAGES[game].prompt.response_to_move
             )

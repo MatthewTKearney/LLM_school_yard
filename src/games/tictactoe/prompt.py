@@ -9,7 +9,9 @@ def create_prompt(game_state):
     prompt=f"""
 We are playing tic-tac-toe. You are {player_symbol}. It is your move. The current board is:
     
+```
 {board}
+```
 
 Think carefully about the optimal move and then choose the space to move in. Your final answer should be of the format "{get_answer_format("row, col")}" where row is one of {{top, bottom, center}} and col is one of {{left, center, right}}.
 """.strip()
