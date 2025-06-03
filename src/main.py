@@ -13,9 +13,10 @@ def main():
     parser.add_argument("--include_all_states", help="Whether to export only the critical points in the game tree or all states", action='store_true')
     
     # args for running task
-    parser.add_argument("--sample_filter", help="Name of the game specific function to use to filter samples before getting model responses", default=None, type=str)
+    parser.add_argument("--sample_filters", help="Name of filters to use to filter samples before getting model responses", default=None, nargs="+")
     parser.add_argument("--models", help="Models to evaluate", required=True, nargs='+')
-    parser.add_argument("--max_num_samples", help="Maximum number of game states to evaluate model on", default=None, type=int)
+    parser.add_argument("--max_samples", help="Maximum number of game states to evaluate model on", default=None, type=int)
+    parser.add_argument("--max_samples_per_difficulty", help="Maximum number of game states of each difficulty to evaluate model on", default=None, type=int)
     parser.add_argument("--token_limit", help="Model generation token limit", default=None, type=int)
     parser.add_argument("--reasoning_tokens", help="Model generation token limit", default=None, type=int)
     parser.add_argument("--reasoning_effort", help="Model generation token limit", default=None, type=str)
@@ -30,7 +31,7 @@ def main():
     export_game_states(args.game, outdir=args.data_dir, include_all_states=False)
 
     print(args.token_limit)
-    run_task(args.game, args.models, data_dir=args.data_dir, sample_filter=args.sample_filter, max_num_samples=args.max_num_samples, token_limit=args.token_limit, reasoning_tokens=args.reasoning_tokens, reasoning_effort=args.reasoning_effort, reasoning_summary=args.reasoning_summary)
+    run_task(args.game, args.models, data_dir=args.data_dir, sample_filters=args.sample_filters, max_samples=args.max_samples, max_samples_per_difficulty=args.max_samples_per_difficuly, token_limit=args.token_limit, reasoning_tokens=args.reasoning_tokens, reasoning_effort=args.reasoning_effort, reasoning_summary=args.reasoning_summary)
 
     process_results(args.game, args.models, args.baselines, args.group_keys, args.data_dir)
 

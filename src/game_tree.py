@@ -5,6 +5,7 @@ from copy import deepcopy
 
 from src.games import GAME_PACKAGES
 from src.utils import json_save, json_dumps
+from functools import partial
     
 class GameStateTree():
     def __init__(self, game, node_lookup=None, root=False):
@@ -129,16 +130,25 @@ def export_game_states(game_type, outdir=None, include_all_states=False):
     filter_fxn=lambda x: x.win_critical != x.lose_critical
     if include_all_states:
         filter_fxn=lambda x: True
-    game = GAME_PACKAGES[game_type].GameClass()
+    game = GAME_PACKAGES[game_type].Game()
     tree = GameStateTree(game)
     os.makedirs(outdir, exist_ok=True)
     outpath = os.path.join(outdir, f"{game_type}.json")
     
-    def tree_to_prompt_state(tree):
+    def tree_to_prompt_state(tree, node_similarities={}):
+        similarity_idx = None
+        for node, idx in node_similarities.items():
+            if node.similar_to(tree):
+                similarity_idx = idx
+                break
+        if not similarity_idx:
+            similarity_idx = len(node_similarities)
+            node_similarities[tree] = similarity_idx
+
         move_outcomes = np.array(list(tree.move_to_outcome.values()))
         optimal_outcome = np.max(move_outcomes)
-        return {
-            "board": tree.board.tolist(),
+        state_dict = {
+            "board": tree.board,
             "next_player": tree.next_player,
             "moves": [
                 {
@@ -157,9 +167,14 @@ def export_game_states(game_type, outdir=None, include_all_states=False):
             "lose_difficulty": tree.lose_difficulty,
             "num_optimal_moves": np.sum(move_outcomes == optimal_outcome),
             "optimal_move_percent": np.mean(move_outcomes == optimal_outcome),
-            "tree_size": tree.size
+            "tree_size": tree.size,
+            "similarity_idx": similarity_idx,
         }
-    states = tree.mapfilter_traverse(filter_fxn=filter_fxn, map_fxn=tree_to_prompt_state)
+        if hasattr(tree, "move_properties"):
+            state_dict["move_properties"] = tree.move_properites
+        return state_dict
+    similarity_mapping = {}
+    states = tree.mapfilter_traverse(filter_fxn=filter_fxn, map_fxn=partial(tree_to_prompt_state, node_similarities=similarity_mapping))
     json_save(outpath, states)
     return states
 
