@@ -12,6 +12,44 @@ class TicTacToeBase(GameBase):
         else:
             self.board = np.array(init_board)
 
+        self.move_properties = self.get_move_properties()
+
+    def rotate_board(self, board):
+        rotated = np.array(board).T
+        rotated = rotated[::-1].tolist()
+        return rotated
+
+    def similar_to(self, other):
+        if not self.turn_idx == other.turn_idx:
+            return False
+
+        equivalent_board_states = [to_tuple(self.board.tolist())]
+        for _ in range(3):
+            equivalent_board_states.append(to_tuple(self.rotate_board(equivalent_board_states[-1])))
+        equivalent_board_states.append(to_tuple(self.board.tolist()[::-1]))
+        for _ in range(3):
+            equivalent_board_states.append(to_tuple(self.rotate_board(equivalent_board_states[-1])))
+        equivalent_board_states = set(equivalent_board_states)
+        return to_tuple(other.board.tolist()) in equivalent_board_states
+    
+    def get_move_properties(self):
+        center_values = list(range((self.dim-1)//2, self.dim//2+1))
+        centers = [(x, y) for x in center_values for y in center_values]
+        corners = [(x, y) for x in [0, self.dim-1] for y in [0, self.dim-1]]
+        edges = [(x, y) for x in range(0, self.dim-1) for y in [0, self.dim-1]]
+        edges += [(y, x) for x, y in edges]
+        positions = set(centers + corners + edges)
+        interiors = [(x, y) for x in range(self.dim) for y in range(self.dim) if not (x,y) in positions]
+    
+        return {
+            "move_type": {
+                **{move: "center" for move in centers},
+                **{move: "edge" for move in edges},
+                **{move: "corner" for move in corners},
+                **{move: "interior" for move in interiors},
+            }, 
+        }
+
     def get_next_player(self):
         # 1 always starts
         return 1 if self.turn_idx % 2 == 0 else -1
