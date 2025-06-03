@@ -1,20 +1,26 @@
 import numpy as np
 
-def calc_random_strategy_score(samples):
+def random_strategy(samples):
     assert len(samples) > 0
-    return [sample["optimal_move_percent"] for sample in samples]
+    return [set(sample["moves"]) for sample in samples]
 
-def calc_random_subset_strategy_score(samples, subset, secondary_strategy=calc_random_strategy_score):
+def random_subset_strategy(samples, subset, secondary_strategy=random_strategy):
     assert len(samples) > 0
     subset = set(subset)
-    scores = []
+    choice_sets = []
     for sample in samples:
-        legal_moves = set(sample["moves"])
-        optimal_moves = set(sample["optimal_moves"])
-        legal_subset_moves = len(subset.intersection(legal_moves))
-        if legal_subset_moves > 0:
-            score = len(subset.intersection(optimal_moves))/legal_subset_moves
-        else:
-            score = secondary_strategy([sample])[0]
-        scores.append(score)
+        choice_set = subset.intersection(set(sample["moves"]))
+        if len(choice_set) == 0:
+            choice_set = secondary_strategy([sample])[0]
+        choice_sets.append(choice_set)
+    return choice_sets
+
+def get_strategy_scores(samples, strategy_fxn=None, choice_sets=None):
+    assert len(samples) > 0
+    assert strategy_fxn or choice_sets, "Must provide either a strategy function or a list of choice sets"
+    if strategy_fxn:
+        choice_sets = strategy_fxn(samples)
+    assert len(choice_sets) == len(samples)
+    optimal_choices = [set(sample["optimal_moves"]) for sample in samples]
+    scores = [len(choices.intersection(optimal))/len(choices) for choices, optimal in zip(choice_sets, optimal_choices)]
     return scores
