@@ -72,7 +72,7 @@ def get_game_task(dataset, scorer):
         )
     return game_task
 
-def run_task(game, models, data_dir="./data", sample_filter=None, max_num_samples=None, random_seed=0, token_limit=None):
+def run_task(game, models, data_dir="./data", sample_filter=None, max_num_samples=None, random_seed=0, token_limit=None, reasoning_tokens=None, reasoning_effort=None, reasoning_summary=None):
     if random_seed:
         random.seed(random_seed)
     dataset = get_dataset(game, data_dir=data_dir, sample_filter=sample_filter, max_num_samples=max_num_samples, seed=random_seed)
@@ -85,6 +85,9 @@ def run_task(game, models, data_dir="./data", sample_filter=None, max_num_sample
             log_dir=log_dir,
             token_limit=token_limit, 
             max_connections=20,  
+            reasoning_tokens=reasoning_tokens,
+            reasoning_effort=reasoning_effort,
+            reasoning_summary=reasoning_summary,
     )
     model_to_log_path = {log.eval.model: log.location for log in logs}
     for model, original_log_path in model_to_log_path.items():
@@ -102,8 +105,11 @@ def main():
     parser.add_argument("--max_num_samples", help="Maximum number of game states to evaluate model on", default=None, type=int)
     parser.add_argument("--random_seed", help="Random seed for shuffling data", default=None, type=int)
     parser.add_argument("--token_limit", help="Model generation token limit", default=None, type=int)
+    parser.add_argument("--reasoning_tokens", help="Model generation token limit", default=None, type=int)
+    parser.add_argument("--reasoning_effort", help="Model generation token limit", default=None, type=str)
+    parser.add_argument("--reasoning_summary", help="Model generation token limit", action="store_true")
     args = parser.parse_args()
-    run_task(args.game, args.models, args.data_dir, args.sample_filter, args.max_num_samples, args.random_seed)
+    run_task(args.game, args.models, args.data_dir, args.sample_filter, args.max_num_samples, args.random_seed, args.reasoning_tokens, args.reasoning_effort, "detailed" if args.reasoning_summary else None)
 
 if __name__ == "__main__":
     main()
