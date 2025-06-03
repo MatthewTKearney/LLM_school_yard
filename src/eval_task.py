@@ -109,7 +109,7 @@ def main():
     parser.add_argument("--reasoning_effort", help="Model generation token limit", default=None, type=str)
     parser.add_argument("--reasoning_summary", help="Model generation token limit", action="store_true")
     args = parser.parse_args()
-    run_task(args.game, args.models, args.data_dir, args.sample_filter, args.max_num_samples, args.random_seed, args.reasoning_tokens, args.reasoning_effort, "detailed" if args.reasoning_summary else None)
+    run_task(args.game, args.models, data_dir=args.data_dir, sample_filter=args.sample_filter, max_num_samples=args.max_num_samples, random_seed=args.random_seed, reasoning_tokens=args.reasoning_tokens, reasoning_effort=args.reasoning_effort, reasoning_summary=args.reasoning_summary)
 
 if __name__ == "__main__":
     main()
