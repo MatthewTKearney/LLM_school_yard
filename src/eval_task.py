@@ -84,6 +84,7 @@ def run_task(game, models, data_dir="./data", sample_filter=None, max_num_sample
             model=models,
             log_dir=log_dir,
             token_limit=token_limit, 
+            max_connections=20,  
     )
     model_to_log_path = {log.eval.model: log.location for log in logs}
     for model, original_log_path in model_to_log_path.items():
