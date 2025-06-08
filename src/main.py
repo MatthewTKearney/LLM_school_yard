@@ -13,15 +13,16 @@ def main():
     parser.add_argument("--include_all_states", help="Whether to export only the critical points in the game tree or all states", action='store_true')
     
     # args for running task
-    parser.add_argument("--sample_filters", help="Name of filters to use to filter samples before getting model responses", default=None, nargs="+")
     parser.add_argument("--models", help="Models to evaluate", required=True, nargs='+')
+    parser.add_argument("--sample_filters", help="Name of the filters to use to filter samples before getting model responses", default=None, nargs='+')
     parser.add_argument("--max_samples", help="Maximum number of game states to evaluate model on", default=None, type=int)
     parser.add_argument("--max_samples_per_difficulty", help="Maximum number of game states of each difficulty to evaluate model on", default=None, type=int)
+    
     parser.add_argument("--max_tokens", help="Model generation token limit", default=None, type=int)
     parser.add_argument("--reasoning_tokens", help="Model generation token limit", default=None, type=int)
     parser.add_argument("--reasoning_effort", help="Model generation token limit", default=None, type=str)
-    parser.add_argument("--reasoning_summary", help="Model generation token limit", action="store_true")
-
+    parser.add_argument("--reasoning_summary", help="Model generation token limit", default="detailed", type=str)
+    
     # args for processing results
     parser.add_argument("--baselines", help="Baseline strategies to plot evaluation results for", required=False, default="all", nargs='+')
     parser.add_argument("--group_keys", help="Properties of samples for grouping scores into subplots", default=None, nargs='+')
