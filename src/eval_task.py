@@ -19,6 +19,7 @@ import numpy as np
 from src.games import GAME_PACKAGES
 from src.prompt import score_response
 from src.critical_point_filters import get_filter, get_difficulty
+from src.model_utils import get_models, get_model_name
 
 def record_to_sample(record, create_prompt):
     record = json_loads(json_dumps(record)) #for custom encoder
@@ -75,7 +76,7 @@ def get_scorer(game):
         async def score(state: TaskState, target):
             score = score_response(
                 state.output.completion,
-                {tuple(move["move"]) for move in state.metadata["moves"]}, 
+                {move["move"] for move in state.metadata["moves"]}, 
                 state.metadata["optimal_moves"], 
                 response_to_move=GAME_PACKAGES[game].prompt.response_to_move
             )
@@ -98,24 +99,22 @@ def get_game_task(dataset, scorer):
         )
     return game_task
 
-def run_task(game, models, data_dir="./data", sample_filters=None, max_samples=None, max_samples_per_difficulty=None, random_seed=0, token_limit=None, reasoning_tokens=None, reasoning_effort=None, reasoning_summary=None):
+def run_task(game, models, data_dir="./data", sample_filters=None, max_samples=None, max_samples_per_difficulty=None, random_seed=0, model_config_kwargs=dict()):
     if random_seed:
         random.seed(random_seed)
+        model_config_kwargs["seed"] = random_seed
     dataset = get_dataset(game, data_dir=data_dir, sample_filters=sample_filters, max_samples=max_samples, max_samples_per_difficulty=max_samples_per_difficulty, seed=random_seed)
     scorer = get_scorer(game)
     task = get_game_task(dataset, scorer)
+    models = get_models(models, model_config_kwargs)
     log_dir = os.path.join(data_dir, "model_evals", game)
     logs = eval(
             task,
             model=models,
             log_dir=log_dir,
-            token_limit=token_limit, 
-            max_connections=20,  
-            reasoning_tokens=reasoning_tokens,
-            reasoning_effort=reasoning_effort,
-            reasoning_summary=reasoning_summary,
+            max_connections=20,
     )
-    model_to_log_path = {log.eval.model: log.location for log in logs}
+    model_to_log_path = {get_model_name(log.eval.model, log.eval.model_generate_config): log.location for log in logs}
     for model, original_log_path in model_to_log_path.items():
         model_log_dir = os.path.join(log_dir, model)
         os.makedirs(model_log_dir, exist_ok=True)
@@ -131,12 +130,15 @@ def main():
     parser.add_argument("--max_samples", help="Maximum number of game states to evaluate model on", default=None, type=int)
     parser.add_argument("--max_samples_per_difficulty", help="Maximum number of game states of each difficulty to evaluate model on", default=None, type=int)
     parser.add_argument("--random_seed", help="Random seed for shuffling data", default=None, type=int)
-    parser.add_argument("--token_limit", help="Model generation token limit", default=None, type=int)
+    
+    # generation config kwargs
+    parser.add_argument("--max_tokens", help="Model generation token limit", default=None, type=int)
     parser.add_argument("--reasoning_tokens", help="Model generation token limit", default=None, type=int)
     parser.add_argument("--reasoning_effort", help="Model generation token limit", default=None, type=str)
-    parser.add_argument("--reasoning_summary", help="Model generation token limit", action="store_true")
+    parser.add_argument("--reasoning_summary", help="Model generation token limit", default="detailed", type=str)
+    
     args = parser.parse_args()
-    run_task(args.game, args.models, data_dir=args.data_dir, sample_filters=args.sample_filters, max_samples=args.max_samples, max_samples_per_difficulty=args.max_samples_per_difficulty, random_seed=args.random_seed, reasoning_tokens=args.reasoning_tokens, reasoning_effort=args.reasoning_effort, reasoning_summary=args.reasoning_summary)
+    run_task(args.game, args.models, data_dir=args.data_dir, sample_filters=args.sample_filters, max_samples=args.max_samples, max_samples_per_difficulty=args.max_samples_per_difficulty, random_seed=args.random_seed, model_config_kwargs=vars(args))
 
 if __name__ == "__main__":
     main()

@@ -11,6 +11,7 @@ from functools import partial
 from src.games import GAME_PACKAGES
 from src.strategy import get_baseline_strategy_results
 from src.prompt import score_response
+from src.utils import parse_models
 
 def parse_log(log_path, game):
     log = read_eval_log(log_path)
@@ -362,7 +363,9 @@ def create_strategy_plot(move_types_to_sample_idx, model_scores_by_move_type, fp
     # plt.show()
     plt.savefig(fpath, bbox_inches='tight')
 
-def process_results(game, models, baselines, group_keys, data_dir, plot_wrong_format=True, include_strategy_plot=False, combine_symmetries=False):
+def process_results(game, models, baselines, group_keys, data_dir, plot_wrong_format=True, include_strategy_plot=False, combine_symmetries=False, model_config_kwargs=dict()):
+    _, models = parse_models(models, model_config_kwargs)
+    
     solver_scores = {}
     solver_wrong_format = {}
     model_choices = {}
@@ -410,6 +413,13 @@ def main():
     parser.add_argument("--group_keys", help="Properties of samples for grouping scores into subplots", default=None, nargs='+') 
     parser.add_argument("--plot_strategy", action='store_true')
     parser.add_argument("--combine_symmetries", action='store_true') 
+
+    # generation config kwargs
+    parser.add_argument("--max_tokens", help="Model generation token limit", default=None, type=int)
+    parser.add_argument("--reasoning_tokens", help="Model generation token limit", default=None, type=int)
+    parser.add_argument("--reasoning_effort", help="Model generation token limit", default=None, type=str)
+    parser.add_argument("--reasoning_summary", help="Model generation token limit", default="detailed", type=str)
+
     args = parser.parse_args()
 
     # anthropic/claude-sonnet-4-20250514
@@ -419,7 +429,7 @@ def main():
     # baseline_strategies = "all"
     # group_keys=["difficulty"]
 
-    process_results(args.game, args.models, args.baselines, args.group_keys, args.data_dir, include_strategy_plot=args.plot_strategy, combine_symmetries=args.combine_symmetries)
+    process_results(args.game, args.models, args.baselines, args.group_keys, args.data_dir, include_strategy_plot=args.plot_strategy, combine_symmetries=args.combine_symmetries, model_config_kwargs=vars(args))
 
 
 if __name__ == "__main__":

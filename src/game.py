@@ -18,6 +18,9 @@ class GameBase(ABC):
         """
         pass
 
+    def get_game_properties(self):
+        return {}
+
 class GameState(GameBase, ABC):
     def init_properties(self):
         self.next_player = self.get_next_player()
@@ -36,9 +39,9 @@ class GameState(GameBase, ABC):
     def __str__(self):
         pass
 
-    @abstractmethod
-    def export_for_prompt(self):
-        pass
+    # @abstractmethod
+    # def export_for_prompt(self):
+    #     pass
          
 class Game(GameBase, ABC):
     @abstractmethod

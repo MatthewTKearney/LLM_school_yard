@@ -1,5 +1,8 @@
 import json
 import numpy as np
+from copy import copy
+from re import fullmatch
+from inspect_ai.model import get_model, GenerateConfig
 
 class CustomEncoder(json.JSONEncoder):
     def encode(self, obj):
@@ -55,4 +58,3 @@ def json_loads(json_str):
 
 def to_tuple(lst):
     return tuple(to_tuple(i) if isinstance(i, list) else i for i in lst)
-        

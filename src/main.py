@@ -17,7 +17,7 @@ def main():
     parser.add_argument("--models", help="Models to evaluate", required=True, nargs='+')
     parser.add_argument("--max_samples", help="Maximum number of game states to evaluate model on", default=None, type=int)
     parser.add_argument("--max_samples_per_difficulty", help="Maximum number of game states of each difficulty to evaluate model on", default=None, type=int)
-    parser.add_argument("--token_limit", help="Model generation token limit", default=None, type=int)
+    parser.add_argument("--max_tokens", help="Model generation token limit", default=None, type=int)
     parser.add_argument("--reasoning_tokens", help="Model generation token limit", default=None, type=int)
     parser.add_argument("--reasoning_effort", help="Model generation token limit", default=None, type=str)
     parser.add_argument("--reasoning_summary", help="Model generation token limit", action="store_true")
@@ -30,8 +30,7 @@ def main():
 
     export_game_states(args.game, outdir=args.data_dir, include_all_states=False)
 
-    print(args.token_limit)
-    run_task(args.game, args.models, data_dir=args.data_dir, sample_filters=args.sample_filters, max_samples=args.max_samples, max_samples_per_difficulty=args.max_samples_per_difficuly, token_limit=args.token_limit, reasoning_tokens=args.reasoning_tokens, reasoning_effort=args.reasoning_effort, reasoning_summary=args.reasoning_summary)
+    run_task(args.game, args.models, data_dir=args.data_dir, sample_filters=args.sample_filters, max_samples=args.max_samples, max_samples_per_difficulty=args.max_samples_per_difficuly, model_config_kwargs=vars(args))
 
     process_results(args.game, args.models, args.baselines, args.group_keys, args.data_dir)
 
