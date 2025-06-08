@@ -9,7 +9,7 @@ def create_prompt(game_state):
     nrows, ncols = len(game_state["board"]), len(game_state["board"][0])
     final_col_letter = ALPHABET[ncols-1]
     prompt=f"""
-You are playing Connect Four on a board that has {nrows} rows and {ncols} columns. You are {player_symbol} and your opponent is {opponent_symbol}. A {player_symbol_dict[0]} indicates an empty spot. It is your move. The current board is:
+You are playing Connect Four on a board that has {nrows} rows and {ncols} columns. You are {player_symbol} and your opponent is {opponent_symbol}. A "{player_symbol_dict[0]}" indicates an empty spot. It is your move. The current board is:
     
 ```
 {board}
@@ -20,12 +20,11 @@ Think carefully about the optimal move and then choose the column to place your 
 
     return prompt
 
-def response_to_move(model_response, game):
+def response_to_move(model_response):
     try:
         answer = extract_final_answer(model_response)
-        answer = [letter for letter in answer.upper() if letter in ALPHABET]
+        answer = "".join([letter for letter in answer.upper() if letter in ALPHABET])
         assert len(answer) == 1
-        assert answer in ALPHABET[:len(game.board[0])]
         return ALPHABET.index(answer)
     except:
         return None

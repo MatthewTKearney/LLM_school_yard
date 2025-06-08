@@ -3,20 +3,26 @@ import numpy as np
 from src.game import GameBase, GameState, Game
 from src.utils import to_tuple
 
-class Sum15Base(GameBase):
-    def __init__(self, offset=3, init_board=None):
+import itertools
+class WordTicTacToeBase(GameBase):
+    def __init__(self, init_board=None):
         self.turn_idx = 0
-        self.offset = offset
-        self.goal_sum = 15 + 3*self.offset
-
-        magic_square = (np.arange(1,10)+self.offset).tolist()
         
+        # words = {"eat", "bee", "less", "air", "bits", "lip", "soda", "book", "lot"}
+        self.words = sorted(["pout", "toga", "oil", "sue", "apple", "dice", "null", "and", "pin"])
+        self.winning_combinations = []
+        for word1, word2, word3 in itertools.combinations(self.words, 3):
+            overlapping_letters = set(list(word1)).intersection(set(list(word2))).intersection(set(list(word3)))
+            if len(overlapping_letters)> 0:
+                self.winning_combinations.append({word1, word2, word3})
+        # print(self.winning_combinations)
+
         if init_board is None:
-            self.board = [magic_square, [], []] # remaining nums, player 1 nums, player -1 nums
+            self.board = [self.words, [], []] # remaining nums, player 1 nums, player -1 nums
         else:
-            nums_chosen = init_board[0] + init_board[1]
-            magic_square = [num for num in magic_square if not num in nums_chosen]
-            self.board = [magic_square, sorted(init_board[0]), sorted(init_board[1])]
+            words_chosen = init_board[0] + init_board[1]
+            remaining_words = [word for word in self.words if not word in words_chosen]
+            self.board = [remaining_words, sorted(init_board[0]), sorted(init_board[1])]
 
         # self.move_properties = self.get_move_properties()
 
@@ -51,62 +57,58 @@ class Sum15Base(GameBase):
         return self.board[0]
 
     def get_winner(self):
-        player1_nums = itertools.combinations(self.board[1], 3)
-        for nums in player1_nums:
-            if sum(nums) == self.goal_sum:
+        player1_words = set(self.board[1])
+        # print(player1_words)
+        for winning_combo in self.winning_combinations:
+            if len(winning_combo.intersection(player1_words)) == 3:
                 return 1
 
-        playerm1_nums = itertools.combinations(self.board[-1], 3)
-        for nums in playerm1_nums:
-            if sum(nums) == self.goal_sum:
+        playerm1_words = set(self.board[2])
+        for winning_combo in self.winning_combinations:
+            if len(winning_combo.intersection(playerm1_words)) == 3:
                 return -1
 
         if len(self.board[0]) > 0:
             return None
         return 0
-    
-    def get_game_properties(self):
-        return {
-            "goal_sum": self.goal_sum,
-            "offset": self.offset,
-        }
 
-class Sum15State(GameState, Sum15Base):
-    def __init__(self, board, turn_idx, offset, goal_sum):
+class WordTicTacToeState(GameState, WordTicTacToeBase):
+    def __init__(self, board, turn_idx, words):
+        super().__init__()
         ## state
         self.board = board
         self.turn_idx = turn_idx
-        self.offset = offset
-        self.goal_sum = goal_sum
+        self.words = words
         
         ## properties
         self.init_properties()
 
     def __eq__(self, other):
-        self_without_offset = [[num-self.offset for num in numset] for numset in self.board]
-        other_without_offset = [[num-other.offset for num in numset] for numset in other.board]
-        return self_without_offset == other_without_offset
+        return self.board == other.board
 
     def __hash__(self):
         return hash(to_tuple(self.board))
 
     def __str__(self):
         s = f"""
-        Numbers Left in Pot: {self.board[0]}
-        Player A Numbers: {self.board[1]}
-        Player B Numbers: {self.board[2]}
+        Words Left in Pot: {self.board[0]}
+        Player A Words: {self.board[1]}
+        Player B Words: {self.board[2]}
         """.strip()
         return s 
 
-class Sum15(Game, Sum15Base):
-    def move(self, num):
+    def export_for_prompt(self):
+        return self.board, self.next_player
+
+class WordTicTacToe(Game, WordTicTacToeBase):
+    def move(self, word):
         if self.get_winner():
             return
-        assert num in self.board[0]
-        self.board[0].remove(num)
+        assert word in self.board[0]
+        self.board[0].remove(word)
         player_idx = 1 if self.get_next_player() == 1 else 2
-        self.board[player_idx] = sorted(self.board[player_idx] + [num])
+        self.board[player_idx] = sorted(self.board[player_idx] + [word])
         self.turn_idx += 1
     
     def get_state(self):
-        return Sum15State(self.board, self.turn_idx, self.offset, self.goal_sum)
+        return WordTicTacToeState(self.board, self.turn_idx, self.words)

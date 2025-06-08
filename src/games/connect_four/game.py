@@ -74,6 +74,13 @@ class ConnectFourBase(GameBase):
             return None
         else:
             return 0
+        
+    def get_game_properties(self):
+        return {
+            "nrows": self.nrows,
+            "ncols": self.ncols,
+            "nwin": self.nwin,
+        }
 
 class ConnectFourState(GameState, ConnectFourBase):
     def __init__(self, board, turn_idx, nrows, ncols, nwin):
