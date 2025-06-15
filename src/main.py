@@ -22,7 +22,8 @@ def main():
     parser.add_argument("--reasoning_tokens", help="Model generation token limit", default=None, type=int)
     parser.add_argument("--reasoning_effort", help="Model generation token limit", default=None, type=str)
     parser.add_argument("--reasoning_summary", help="Model generation token limit", default="detailed", type=str)
-    
+    parser.add_argument("--random_seed", help="Random seed for shuffling data", default=0, type=int)
+
     # args for processing results
     parser.add_argument("--baselines", help="Baseline strategies to plot evaluation results for", required=False, default="all", nargs='+')
     parser.add_argument("--group_keys", help="Properties of samples for grouping scores into subplots", default=None, nargs='+')
@@ -31,7 +32,7 @@ def main():
 
     export_game_states(args.game, outdir=args.data_dir, include_all_states=False)
 
-    run_task(args.game, args.models, data_dir=args.data_dir, sample_filters=args.sample_filters, max_samples=args.max_samples, max_samples_per_difficulty=args.max_samples_per_difficuly, model_config_kwargs=vars(args))
+    run_task(args.game, args.models, data_dir=args.data_dir, sample_filters=args.sample_filters, max_samples=args.max_samples, max_samples_per_difficulty=args.max_samples_per_difficuly, model_config_kwargs=vars(args), random_seed=args.random_seed)
 
     process_results(args.game, args.models, args.baselines, args.group_keys, args.data_dir)
 

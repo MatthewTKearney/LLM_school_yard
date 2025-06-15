@@ -41,7 +41,6 @@ def filter_dataset(dataset, sample_filters=None, max_samples = None, max_samples
         idxs_to_include = []
         for difficulty in np.unique(sample_difficulties):
             sample_idxs = np.arange(len(dataset))[sample_difficulties == difficulty]
-            print(difficulty, len(sample_idxs))
             idxs_to_include += sample_idxs[:max_samples_per_difficulty].tolist()
         idxs_to_include.sort()
         dataset = MemoryDataset(
@@ -65,8 +64,6 @@ def get_dataset(game, data_dir="./data", sample_filters=None, max_samples=None, 
         seed=seed,
     )
 
-    print(len(dataset))
-
     dataset = filter_dataset(dataset, sample_filters, max_samples, max_samples_per_difficulty)
     return dataset
 
@@ -89,23 +86,20 @@ def get_scorer(game):
         return score
     return game_scorer
 
-def get_game_task(dataset, scorer):
-    @task
-    def game_task():
-        return Task(
-            dataset=dataset,
-            solver=[generate()],
-            scorer=scorer()
-        )
-    return game_task
+@task
+def game_task(dataset, scorer):
+    return Task(
+        dataset=dataset,
+        solver=[generate()],
+        scorer=scorer()
+    )
 
 def run_task(game, models, data_dir="./data", sample_filters=None, max_samples=None, max_samples_per_difficulty=None, random_seed=0, model_config_kwargs=dict()):
-    if random_seed:
-        random.seed(random_seed)
-        model_config_kwargs["seed"] = random_seed
+    model_config_kwargs["seed"] = random_seed
     dataset = get_dataset(game, data_dir=data_dir, sample_filters=sample_filters, max_samples=max_samples, max_samples_per_difficulty=max_samples_per_difficulty, seed=random_seed)
+
     scorer = get_scorer(game)
-    task = get_game_task(dataset, scorer)
+    task = game_task(dataset, scorer)
     models = get_models(models, model_config_kwargs)
     log_dir = os.path.join(data_dir, "model_evals", game)
     logs = eval(
@@ -129,7 +123,7 @@ def main():
     parser.add_argument("--sample_filters", help="Name of the filters to use to filter samples before getting model responses", default=None, nargs='+')
     parser.add_argument("--max_samples", help="Maximum number of game states to evaluate model on", default=None, type=int)
     parser.add_argument("--max_samples_per_difficulty", help="Maximum number of game states of each difficulty to evaluate model on", default=None, type=int)
-    parser.add_argument("--random_seed", help="Random seed for shuffling data", default=None, type=int)
+    parser.add_argument("--random_seed", help="Random seed for shuffling data", default=0, type=int)
     
     # generation config kwargs
     parser.add_argument("--max_tokens", help="Model generation token limit", default=None, type=int)
