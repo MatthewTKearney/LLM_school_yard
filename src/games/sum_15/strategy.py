@@ -3,17 +3,17 @@ from functools import partial
 import numpy as np
 
 def center_strategy(samples, secondary_strategy=random_strategy):
-    offset = min([min(row) for row in samples[0]["board"]]) - 1
+    offset = min([min(row) for row in samples[0]["board"] if len(row)>0]) - 1
     center = {5 + offset}
     return random_subset_strategy(samples, center, secondary_strategy=secondary_strategy)
 
 def corner_strategy(samples, secondary_strategy=random_strategy):
-    offset = min([min(row) for row in samples[0]["board"]]) - 1
+    offset = min([min(row) for row in samples[0]["board"] if len(row)>0]) - 1
     corners = {x + offset for x in [2,4,6,8]}
     return random_subset_strategy(samples, corners, secondary_strategy=secondary_strategy)
     
 def edge_strategy(samples, secondary_strategy=random_strategy):
-    offset = min([min(row) for row in samples[0]["board"]]) - 1
+    offset = min([min(row) for row in samples[0]["board"] if len(row)>0]) - 1
     edges = {x + offset for x in [9,7,1,3]}
     return random_subset_strategy(samples, edges, secondary_strategy=secondary_strategy)
 

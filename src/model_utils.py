@@ -29,33 +29,16 @@ MODEL_TO_GENERATION_CONFIG.update({
       for model in REASONING_TOKEN_MODELS
 })
 
-print(MODEL_TO_GENERATION_CONFIG)
-
-def get_model_name(model_name, model_config):
-    keys_to_include = ["reasoning_effort", "reasoning_tokens"]
-    appendix = ""
-    for key in keys_to_include:
-        if key in vars(model_config) and vars(model_config)[key] is not None:
-            appendix += "_"+str(vars(model_config)[key])
-    return f"{model_name}{appendix}"
+def get_model_name_and_config(model_name, default_model_config):
+    for pattern, (name, generation_kwargs_fxn) in MODEL_TO_GENERATION_CONFIG.items():
+        if re.fullmatch(pattern, model_name):
+            generation_config = copy(default_model_config)
+            generation_config.update(generation_kwargs_fxn(model_name))
+            return name, generation_config
+    return model_name, default_model_config
 
 def get_models(model_names, default_model_config={}):
-    parsed_model_names = []
-    generation_configs = []
-    for model_name in model_names:
-        matched=False
-        for pattern, (name, generation_kwargs_fxn) in MODEL_TO_GENERATION_CONFIG.items():
-            if re.fullmatch(pattern, model_name):
-                parsed_model_names.append(name)
-                generation_config = copy(default_model_config)
-                generation_config.update(generation_kwargs_fxn(model_name))
-                generation_configs.append(generation_config)
-                matched=True
-                break
-        if not matched:
-            parsed_model_names.append(model_name)
-            generation_configs.append({})
-
+    parsed_model_names, generation_configs = zip(*[get_model_name_and_config(model_name) for model_name in model_names])
     models = [get_model(model, config=GenerateConfig(**kwargs)) for model, kwargs in zip(parsed_model_names, generation_configs)]
     return models
 

@@ -11,19 +11,22 @@ from functools import partial
 from src.games import GAME_PACKAGES
 from src.strategy import get_baseline_strategy_results
 from src.prompt import score_response
-from src.utils import parse_models
+from src.model_utils import get_model_name_and_config
 
 def parse_log(log_path, game):
     log = read_eval_log(log_path)
     samples = log.samples
     all_sample_properties = []
-    for sample in samples:
+    for sample_idx, sample in enumerate(samples):
         sample_dict = sample.dict()
         metadata = sample_dict["metadata"]
+        if sample_idx == 0:
+            print(metadata.keys())
         
         # TODO: Remove once logs are updated with new info
         for move in metadata["moves"]:
-            move["move"] = tuple(move["move"])
+            if isinstance(move["move"], list):
+                move["move"] = tuple(move["move"])
         
         optimal_outcome = max([move["outcome"] for move in metadata["moves"]])
         optimal_moves = list(map(lambda x: x["move"], filter(lambda x: x["outcome"] == optimal_outcome, metadata["moves"])))
@@ -32,11 +35,16 @@ def parse_log(log_path, game):
         ## 
 
         ## TODO: Must be a better way to do this
-        model_response = sample_dict["output"]["choices"][0]["message"]["content"]
-        if isinstance(model_response, list):
-            model_response = model_response[-1]
-            if isinstance(model_response, dict):
-                model_response = model_response["text"]
+        try:
+            model_response = sample_dict["output"]["choices"][0]["message"]["content"]
+            if isinstance(model_response, list):
+                model_response = model_response[-1]
+                if isinstance(model_response, dict):
+                    model_response = model_response["text"]
+            move_chosen = GAME_PACKAGES[game].prompt.response_to_move(model_response)
+        except:
+            print(f"WARNING: COULD NOT PARSE SAMPLE {sample_idx} FROM {log_path}")
+            move_chosen = None
 
         correct = None
         if sample_dict["scores"] and list(sample_dict["scores"].values())[0]["value"]=="C":
@@ -46,7 +54,7 @@ def parse_log(log_path, game):
         sample_properties = {
             "error": sample_dict["error"],
             "correct": correct,
-            "move_chosen": GAME_PACKAGES[game].prompt.response_to_move(model_response),
+            "move_chosen": move_chosen,
             "win_critical": metadata["win_critical"],
             "lose_critical": metadata["lose_critical"],
             "critical_point_type": "win critical" if metadata["win_critical"] else "lose critical",
@@ -58,11 +66,14 @@ def parse_log(log_path, game):
             "optimal_moves": [move["move"] for move in metadata["moves"] if move["outcome"] == optimal_outcome], #metadata["optimal_outcome"]
             "board": metadata["board"],
         }
-        if "move_properties" in metadata: #TODO: replace once new data
-            sample_properties["move_properties"] = metadata["move_properties"]
-        if "similarity_idx" in metadata: #TODO: replace once new data
-            sample_properties["similarity_idx"] = metadata["similarity_idx"]
-        sample_properties["move_properties"] = GAME_PACKAGES[game].Game().get_move_properties()
+        for k, v in metadata.items():
+            if not k in sample_properties:
+                sample_properties[k] = v
+        # if "move_properties" in metadata: #TODO: replace once new data
+        #     sample_properties["move_properties"] = metadata["move_properties"]
+        # if "similarity_idx" in metadata: #TODO: replace once new data
+        #     sample_properties["similarity_idx"] = metadata["similarity_idx"]
+        # sample_properties["move_properties"] = GAME_PACKAGES[game].Game().get_move_properties()
         all_sample_properties.append(sample_properties)
     return all_sample_properties, log.results.dict()["scores"][0]["metrics"]
 
@@ -364,14 +375,15 @@ def create_strategy_plot(move_types_to_sample_idx, model_scores_by_move_type, fp
     plt.savefig(fpath, bbox_inches='tight')
 
 def process_results(game, models, baselines, group_keys, data_dir, plot_wrong_format=True, include_strategy_plot=False, combine_symmetries=False, model_config_kwargs=dict()):
-    _, models = parse_models(models, model_config_kwargs)
-    
+    # models, _ = zip(*[get_model_name_and_config(model_name, model_config_kwargs) for model_name in models])
+    print(models)
     solver_scores = {}
     solver_wrong_format = {}
     model_choices = {}
     for model in models:
         #TODO: replace logpath with proper naming convention based on model and game
         model_log_dir = os.path.join(data_dir, "model_evals", game, model)
+        print(model_log_dir)
         log_path = list_eval_logs(model_log_dir)[0].name
         samples, scores = parse_log(log_path, game)
         solver_scores[model] = [1 if sample["correct"] else 0 for sample in samples]
@@ -380,7 +392,8 @@ def process_results(game, models, baselines, group_keys, data_dir, plot_wrong_fo
         # print(model_choices[model])
 
     baseline_choices, baseline_scores = get_baseline_strategy_results(game, samples, baselines)
-    all_models = models + list(baseline_scores.keys())
+    all_models = list(models) + list(baseline_scores.keys())
+    print(all_models)
     solver_scores.update(baseline_scores)
 
     if combine_symmetries:

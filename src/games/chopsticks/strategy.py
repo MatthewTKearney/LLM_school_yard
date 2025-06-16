@@ -34,7 +34,7 @@ def keep_at_one(samples, secondary_strategy=random_strategy):
             if len(legal_splits) > 0:
                 legal_splits = legal_splits[np.all(legal_splits >= 0, axis=1) & np.all(legal_splits < 5, axis=1) & np.all(legal_splits != next_player_hand[0], axis=1)]
             if len(legal_splits) > 0:
-                choice_set = set(("SPLIT", x, y) for x, y in legal_splits.to_list())
+                choice_set = set(("SPLIT", x, y) for x, y in legal_splits.tolist())
         if len(choice_set) == 0:
             choice_set = secondary_strategy([sample])[0]
         choice_sets.append(choice_set)
