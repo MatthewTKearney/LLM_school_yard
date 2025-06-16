@@ -1,7 +1,7 @@
 import itertools
 import numpy as np
-from src.game import GameBase, GameState, Game
-from src.utils import to_tuple
+from game import GameBase, GameState, Game
+from utils import to_tuple
 
 import itertools
 class WordTicTacToeBase(GameBase):

@@ -11,15 +11,15 @@ from functools import partial
 import argparse
 import random 
 import os
-from src.utils import json_load, json_loads, json_dumps
+from utils import json_load, json_loads, json_dumps
 import asyncio
 import shutil
 import numpy as np
 
-from src.games import GAME_PACKAGES
-from src.prompt import score_response
-from src.critical_point_filters import get_filter, get_difficulty
-from src.model_utils import get_models, get_model_name
+from games import GAME_PACKAGES
+from prompt import score_response
+from critical_point_filters import get_filter, get_difficulty
+from model_utils import get_models, get_model_name
 
 def record_to_sample(record, create_prompt):
     record = json_loads(json_dumps(record)) #for custom encoder
@@ -54,7 +54,7 @@ def filter_dataset(dataset, sample_filters=None, max_samples = None, max_samples
 
     return dataset
 
-def get_dataset(game, data_dir="./data", sample_filters=None, max_samples=None, max_samples_per_difficulty=None, seed=None):
+def get_dataset(game, data_dir="./data", sample_filters=None, max_samples=None, max_samples_per_difficulty=None, seed=1):
     dataset_path = os.path.join(data_dir, f"critical_points/{game}.json")
     game_package = GAME_PACKAGES[game]
     dataset = json_dataset(
@@ -62,43 +62,42 @@ def get_dataset(game, data_dir="./data", sample_filters=None, max_samples=None, 
         partial(record_to_sample, create_prompt=game_package.prompt.create_prompt),
         shuffle=True,
         seed=seed,
+        auto_id=True,
     )
 
     dataset = filter_dataset(dataset, sample_filters, max_samples, max_samples_per_difficulty)
     return dataset
 
-def get_scorer(game):
-    @scorer(metrics=[accuracy(), stderr()])
-    def game_scorer():
-        async def score(state: TaskState, target):
-            score = score_response(
-                state.output.completion,
-                {move["move"] for move in state.metadata["moves"]}, 
-                state.metadata["optimal_moves"], 
-                response_to_move=GAME_PACKAGES[game].prompt.response_to_move
-            )
-            if score is None:
-                return Score(value="N") # No answer
-            elif score == 1:
-                return Score(value="C")
-            else:
-                return Score(value="I")
-        return score
-    return game_scorer
+@scorer(metrics=[accuracy(), stderr()])
+def game_scorer(game):
+    async def scorer(state: TaskState, target):
+        score = score_response(
+            state.output.completion,
+            {move["move"] for move in state.metadata["moves"]}, 
+            state.metadata["optimal_moves"], 
+            response_to_move=GAME_PACKAGES[game].prompt.response_to_move
+        )
+        if score is None:
+            return Score(value="N") # No answer
+        elif score == 1:
+            return Score(value="C")
+        else:
+            return Score(value="I")
+    return scorer
 
 @task
 def game_task(dataset, scorer):
     return Task(
         dataset=dataset,
         solver=[generate()],
-        scorer=scorer()
+        scorer=scorer
     )
 
-def run_task(game, models, data_dir="./data", sample_filters=None, max_samples=None, max_samples_per_difficulty=None, random_seed=0, model_config_kwargs=dict()):
+def run_task(game, models, data_dir="./data", sample_filters=None, max_samples=None, max_samples_per_difficulty=None, random_seed=1, model_config_kwargs=dict()):
     model_config_kwargs["seed"] = random_seed
     dataset = get_dataset(game, data_dir=data_dir, sample_filters=sample_filters, max_samples=max_samples, max_samples_per_difficulty=max_samples_per_difficulty, seed=random_seed)
 
-    scorer = get_scorer(game)
+    scorer = game_scorer(game)
     task = game_task(dataset, scorer)
     models = get_models(models, model_config_kwargs)
     log_dir = os.path.join(data_dir, "model_evals", game)
@@ -123,7 +122,7 @@ def main():
     parser.add_argument("--sample_filters", help="Name of the filters to use to filter samples before getting model responses", default=None, nargs='+')
     parser.add_argument("--max_samples", help="Maximum number of game states to evaluate model on", default=None, type=int)
     parser.add_argument("--max_samples_per_difficulty", help="Maximum number of game states of each difficulty to evaluate model on", default=None, type=int)
-    parser.add_argument("--random_seed", help="Random seed for shuffling data", default=0, type=int)
+    parser.add_argument("--random_seed", help="Random seed for shuffling data", default=1, type=int)
     
     # generation config kwargs
     parser.add_argument("--max_tokens", help="Model generation token limit", default=None, type=int)

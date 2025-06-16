@@ -1,6 +1,6 @@
 import numpy as np
-from src.game import GameBase, GameState, Game
-from src.utils import to_tuple
+from game import GameBase, GameState, Game
+from utils import to_tuple
 
 class ConnectFourBase(GameBase):
     def __init__(self, ncols=4, nrows=4, nwin=4, init_board=None):

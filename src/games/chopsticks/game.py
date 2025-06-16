@@ -1,6 +1,6 @@
 import numpy as np
-from src.game import GameBase, GameState, Game
-from src.utils import to_tuple
+from game import GameBase, GameState, Game
+from utils import to_tuple
 
 class ChopsticksBase(GameBase):
     def __init__(self, max_finger_count=5, init_board=None):

@@ -8,10 +8,10 @@ import matplotlib.colors as mcolors
 from collections import defaultdict
 from functools import partial
 
-from src.games import GAME_PACKAGES
-from src.strategy import get_baseline_strategy_results
-from src.prompt import score_response
-from src.utils import parse_models
+from games import GAME_PACKAGES
+from strategy import get_baseline_strategy_results
+from prompt import score_response
+from utils import parse_models
 
 def parse_log(log_path, game):
     log = read_eval_log(log_path)

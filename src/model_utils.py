@@ -29,8 +29,6 @@ MODEL_TO_GENERATION_CONFIG.update({
       for model in REASONING_TOKEN_MODELS
 })
 
-print(MODEL_TO_GENERATION_CONFIG)
-
 def get_model_name(model_name, model_config):
     keys_to_include = ["reasoning_effort", "reasoning_tokens"]
     appendix = ""

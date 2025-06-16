@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import argparse
-from src.games import game_classes
+from games import game_classes
     
 
 class GameStateTree():

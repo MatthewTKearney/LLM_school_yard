@@ -1,4 +1,4 @@
-from src.strategy_utils import random_strategy, random_subset_strategy
+from strategy_utils import random_strategy, random_subset_strategy
 from functools import partial
 import numpy as np
 

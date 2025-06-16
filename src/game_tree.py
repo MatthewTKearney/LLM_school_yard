@@ -3,8 +3,8 @@ import os
 import argparse
 from copy import deepcopy
 
-from src.games import GAME_PACKAGES
-from src.utils import json_save, json_dumps
+from games import GAME_PACKAGES
+from utils import json_save, json_dumps
 from functools import partial
 import sys
     

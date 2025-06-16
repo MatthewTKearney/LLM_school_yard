@@ -1,6 +1,6 @@
 import numpy as np 
-from src.games import GAME_PACKAGES
-from src.strategy_utils import random_strategy, get_strategy_scores
+from games import GAME_PACKAGES
+from strategy_utils import random_strategy, get_strategy_scores
 
 def get_baseline_strategy_results(game, samples, baselines):
     baseline_strategy_dict = GAME_PACKAGES[game].strategy.get_strategies()

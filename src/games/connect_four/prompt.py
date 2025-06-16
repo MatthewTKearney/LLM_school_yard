@@ -1,4 +1,4 @@
-from src.prompt import get_answer_format, extract_final_answer
+from prompt import get_answer_format, extract_final_answer
 
 ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 def create_prompt(game_state):

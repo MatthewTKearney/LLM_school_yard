@@ -1,8 +1,8 @@
 import argparse 
 
-from src.game_tree import export_game_states
-from src.eval_task import run_task
-from src.process_results import process_results
+from game_tree import export_game_states
+from eval_task import run_task
+from process_results import process_results
 
 def main():
     parser = argparse.ArgumentParser()
@@ -22,7 +22,7 @@ def main():
     parser.add_argument("--reasoning_tokens", help="Model generation token limit", default=None, type=int)
     parser.add_argument("--reasoning_effort", help="Model generation token limit", default=None, type=str)
     parser.add_argument("--reasoning_summary", help="Model generation token limit", default="detailed", type=str)
-    parser.add_argument("--random_seed", help="Random seed for shuffling data", default=0, type=int)
+    parser.add_argument("--random_seed", help="Random seed for shuffling data", default=1, type=int)
 
     # args for processing results
     parser.add_argument("--baselines", help="Baseline strategies to plot evaluation results for", required=False, default="all", nargs='+')
