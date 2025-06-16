@@ -1,4 +1,4 @@
-from src.games import GAME_PACKAGES
+from games import GAME_PACKAGES
 
 def get_difficulty(sample):
     if (not sample.metadata["win_difficulty"] is None) and sample.metadata["lose_difficulty"] is None:

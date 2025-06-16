@@ -1,6 +1,6 @@
 import numpy as np
-from src.game import GameBase, GameState, Game
-from src.utils import to_tuple
+from game import GameBase, GameState, Game
+from utils import to_tuple
 
 class TicTacToeBase(GameBase):
     def __init__(self, dim=3, init_board=None):

@@ -1,4 +1,4 @@
-from src.games import tictactoe, connect_four, sum_15, wordtictactoe, chopsticks
+from games import tictactoe, connect_four, sum_15, wordtictactoe, chopsticks
 
 # game class located at package.game.Game
 # prompt template located at package.prompt.create_prompt

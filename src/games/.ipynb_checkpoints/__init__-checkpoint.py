@@ -1,4 +1,4 @@
-from src.games import tictactoe
+from games import tictactoe
 
 game_classes = {
     'tictactoe': tictactoe.TicTacToe,

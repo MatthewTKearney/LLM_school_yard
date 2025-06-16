@@ -1,7 +1,7 @@
 import itertools
 import numpy as np
-from src.game import GameBase, GameState, Game
-from src.utils import to_tuple
+from game import GameBase, GameState, Game
+from utils import to_tuple
 
 class Sum15Base(GameBase):
     def __init__(self, offset=3, init_board=None):
